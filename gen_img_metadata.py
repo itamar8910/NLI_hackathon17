@@ -2,7 +2,7 @@ import commands
 
 import indicoio
 import os
-
+import json
 from face_recog_local import recognize
 from age_gender_estimation.get_age_gender import get_age_gender
 from get_wiki_info import get_year_of_birth
@@ -78,7 +78,7 @@ def gen_metadata(img_path):
         print name, path
         emotion = findEmotion(path)
         age, gender = get_age_gender(path, name = name)
-        persons_md.append([name, age[0], gender[0], emotion])
+        persons_md.append([name, int(age[0]), gender[0], emotion])
         person_yob = get_year_of_birth(name)
         if name != "N/A":
             avg_pic_year += person_yob + age
@@ -87,10 +87,21 @@ def gen_metadata(img_path):
     meta_data = {'persons':persons_md, 'objects':objects, 'year':int(avg_pic_year/float(pic_year_count))}
     textual_desc = get_textual_desc(meta_data)
     meta_data['desc'] = textual_desc
+    file_name = img_path if "/" not in img_path else img_path[img_path.rfind("/")+1:]
+    meta_data['imgName'] = file_name
     return meta_data
 
+def gen_json_metadata_for_dir(dir_path, json_dst_path):
+    mds = []
+    for img_path in os.listdir(dir_path):
+        mds.append(gen_metadata(img_path))
+    with open(json_dst_path,'w') as f:
+        f.write(json.dumps(mds))
 
 if __name__ == "__main__":
+
+    gen_json_metadata_for_dir('tst_md_dir1_1','tst_md_dir1_1.json')
+    exit()
     # inp = "Persons: biden *anonymous* - Emotions: Happy Happy - Objects: bow tie, bow-tie, bowtie Windsor tie groom, bridegroom suit, suit of clothes abaya - "
     # cmd = 'java -jar ./textGen.jar ' + inp
     # print cmd

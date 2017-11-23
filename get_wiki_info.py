@@ -90,7 +90,11 @@ def wikiAge(wikiTitle, function=None):
 
 BIRTH_DATE_DICT = {
     'rabin':1922,
-    'biden': 1946
+    'biden': 1946,
+    'golda': 1898,
+    'dayan':1915,
+    'gurion':1886,
+    'begin':1913,
 }
 
 def get_year_of_birth(name):
@@ -98,7 +102,7 @@ def get_year_of_birth(name):
     if name in BIRTH_DATE_DICT.keys():
         return BIRTH_DATE_DICT[name]
     else: # remove later and go to wikipedia, this is for dbg!!
-        return 40
+        return 1920
     person = wikiAge(name, function=_parseInfobox)
     return int(person['birth_date'].year)
 
