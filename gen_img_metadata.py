@@ -1,11 +1,15 @@
-import commands
+# -*- coding: utf-8 -*-
 
+import commands
+import string
 import indicoio
 import os
 import json
 from face_recog_local import recognize
 from age_gender_estimation.get_age_gender import get_age_gender
 from get_wiki_info import get_year_of_birth
+from googletrans import Translator
+
 from subprocess import Popen, PIPE, STDOUT
 indicoio.config.api_key = '78b44753116b224e21ac1686033bdcb7'
 
@@ -91,16 +95,67 @@ def gen_metadata(img_path):
     meta_data['imgName'] = file_name
     return meta_data
 
+ENG_TO_HEB_DICT = {
+    'golda':u"גולדה",
+    'rabin':u"רבין",
+    'begin':u"בגין",
+    'gurion':u"בן גוריון",
+    'dayan':u"משה דיין",
+    'Angry':u"כועס",
+    'Happy':u"שמח",
+    'Sad':u"עצוב",
+    'Neutral':u"ניטרלי",
+    'Surprise':u"מופתע",
+    'female':u"נקבה",
+    'male':u"זכר",
+}
+
+def translate_word_eng_to_heb(word):
+    if word in ENG_TO_HEB_DICT.keys():
+        return ENG_TO_HEB_DICT[word]
+    else:
+        return u"שגיאת תרגום"
+
+def translate_sentence_eng_to_heb(sen):
+    translator = Translator(service_urls=[
+         'translate.google.com',
+         'translate.google.co.kr',
+       ])
+    d = translator.translate(sen,src='en',dest='iw').text
+    # printable = set(string.printable)
+    # filter(lambda x: x not in printable, d)
+    d = ''.join([i if not(ord(i) < 128) else ' ' for i in d])
+    d = d.strip()
+    return d
+
+
+def translate_mds_to_heb(mds):
+    for i in xrange(len(mds)):
+        md = mds[i]
+        for j in range(len(md['persons'])):
+            pd = md['persons'][j]
+            pd[0] = translate_word_eng_to_heb(pd[0])
+            pd[2] = translate_word_eng_to_heb(pd[2])
+            pd[3] = translate_word_eng_to_heb(pd[3])
+            md['persons'][j] = pd
+        md['desc'] = translate_sentence_eng_to_heb(md['desc'])
+        for j in range(len(md['objects'])):
+            od = md['objects'][j]
+            md['objects'][j] = translate_sentence_eng_to_heb(od)
+    return mds
+
 def gen_json_metadata_for_dir(dir_path, json_dst_path):
     mds = []
     for img_path in os.listdir(dir_path):
         mds.append(gen_metadata(img_path))
+    mds = translate_mds_to_heb(mds)
     with open(json_dst_path,'w') as f:
         f.write(json.dumps(mds))
 
 if __name__ == "__main__":
-
-    gen_json_metadata_for_dir('tst_md_dir1_1','tst_md_dir1_1.json')
+    #print translate_sentence_eng_to_heb("hello gadarugzaq man")
+    #exit()
+    gen_json_metadata_for_dir('tst_md_dir1_1','tst_md_dir1_4.json')
     exit()
     # inp = "Persons: biden *anonymous* - Emotions: Happy Happy - Objects: bow tie, bow-tie, bowtie Windsor tie groom, bridegroom suit, suit of clothes abaya - "
     # cmd = 'java -jar ./textGen.jar ' + inp

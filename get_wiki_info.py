@@ -102,7 +102,7 @@ def get_year_of_birth(name):
     if name in BIRTH_DATE_DICT.keys():
         return BIRTH_DATE_DICT[name]
     else: # remove later and go to wikipedia, this is for dbg!!
-        return 1920
+        return 1930
     person = wikiAge(name, function=_parseInfobox)
     return int(person['birth_date'].year)
 
