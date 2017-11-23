@@ -22,12 +22,10 @@ def get_images_feats(images_paths):
 
 def recognize(img_path, model_path):
     """
-    returns list of the names of the persons that appear in the image
+    returns list[names of the persons that appear in the image, cropped_face_path]
     :param img_path:
     :return:
     """
-
-    # TODO: the image may contain more than one person, impl face localization and decision threshold
 
     cropped_dst_dir = join(os.path.dirname(os.path.realpath(__file__)),
                            "cropped_"+splitext(basename(img_path))[0])
@@ -42,8 +40,16 @@ def recognize(img_path, model_path):
         paths = [img_path]
     imgs_feats = get_images_feats(paths)
     clf = pickle.load(open(model_path,'rb'))
+    closest_distances = clf.kneighbors(imgs_feats, n_neighbors = 1)
+    print closest_distances
+    print paths
+    DIST_THRESH = .5 # TODO: decide later based on expirs.
+    not_recognized_i = [i for i in xrange(len(imgs_feats)) if closest_distances[0][i][0] > DIST_THRESH]
+
     preds = clf.predict(imgs_feats)
-    return preds
+    for i in not_recognized_i:
+        preds[i] = "N/A"
+    return preds, paths
 
 
 def get_face_label(name):
@@ -86,7 +92,9 @@ def train_on_faces(faces_dir, model_output, model = "knn"):
     return set(y)
 
 if __name__ == "__main__":
-    pass
+    print train_on_faces("/home/itamar/PycharmProjects/facedetection/training_faces_dummy",
+                         "knn_dummy_biden_bieber.p", model="knn")
+    print recognize("biden_inaug.jpg", "knn_dummy_biden_bieber.p")
    # print face_recognition.face_locations(face_recognition.load_image_file("test_biden1.jpg"))
     #t = time.time()
     #print train_on_faces("/home/itamar/PycharmProjects/facedetection/training_faces_dummy", "forest_dummy_biden_bieber.p",model="knn")

@@ -27,3 +27,22 @@ def gen_metadata(img_path):
     :param img_path:
     :return: a dict:{'persons':[['<name>','<emotion>'],...], 'objects':['<obj1>',...]}
     """
+    model_path = "knn_dummy_biden_bieber.p"
+    names, paths = recognize(img_path, model_path)
+    persons_md = []
+    for name, path in zip(names, paths):
+        emotion = findEmotion(path)
+        persons_md.append([name, emotion])
+    objects = findThings(img_path)
+    return {'persons':persons_md, 'objects':objects}
+
+if __name__ == "__main__":
+    md = gen_metadata("obama_and_biden.jpg")
+    print md
+    print "*****"
+    print "People in image:"
+    for pd in md['persons']:
+        print "name:" , pd[0], ". Emotion:", pd[1]
+    print "Things in image:"
+    for od in md['objects']:
+        print od

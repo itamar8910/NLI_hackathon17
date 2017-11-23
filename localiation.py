@@ -39,11 +39,15 @@ def extract_faces_local(img_path, dst_dir, sensitivity = 0.8):
         x = results[index][3]
         height = results[index][2] - results[index][0]
         width = results[index][1] - results[index][3]
-        EXTEND = 100
+        EXTEND = 0
         x -= EXTEND
         y -= EXTEND
+        #x = max(x, 0)
+       # y = max(x,0)
         width += EXTEND*2
         height += EXTEND*2
+        #width = min(width, im.shape[1])
+        #height = min(height, im.shape[0])
         cv2.imwrite(join(dst_dir, faceim_name), im[y:y+height,x:x+width])
     return len(results), gened_paths
 
