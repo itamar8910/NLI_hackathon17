@@ -61,20 +61,23 @@ def get_textual_desc(meta_data):
     print "res"
     print res
     return " ".join(res[1].split("\n"))
+
+
 def gen_metadata(img_path):
     """
     generates image metadata: persons in the images and their emotions, and the objects in the image.
     :param img_path:
     :return: a dict:{'persons':[['<name>','<emotion>'],...], 'objects':['<obj1>',...]}
     """
-    model_path = "knn_dummy_biden_bieber.p"
+    model_path = "knn_train_1.p"
     names, paths = recognize(img_path, model_path)
     persons_md = []
     avg_pic_year = 0
     pic_year_count = 0
     for name, path in zip(names, paths):
+        print name, path
         emotion = findEmotion(path)
-        age, gender = get_age_gender(path)
+        age, gender = get_age_gender(path, name = name)
         persons_md.append([name, age[0], gender[0], emotion])
         person_yob = get_year_of_birth(name)
         if name != "N/A":
@@ -100,7 +103,8 @@ if __name__ == "__main__":
     #     print line
     # print stdout
     # exit()
-    md = gen_metadata("/home/itamar/PycharmProjects/facedetection/obama_and_biden.jpg")
+    #md = gen_metadata("/home/itamar/PycharmProjects/facedetection/obama_and_biden.jpg")
+    md = gen_metadata("golda_test1.jpg")
     print md
     print "*****"
     print "People in image:"

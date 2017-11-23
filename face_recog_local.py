@@ -10,15 +10,35 @@ import time
 import os
 from localiation import extract_faces_local
 
+def prep_data_from_dirs(pdir_path):
+    datadir = join(pdir_path, "data")
+    if not isdir(datadir):
+        mkdir(datadir)
+    for f in os.listdir(pdir_path):
+        if f == "data":
+            continue
+        if isdir(join(pdir_path, f)):
+            label = f
+            for img in os.listdir(join(pdir_path, f)):
+                new_name = label + "_" + img
+                os.rename(join(pdir_path, f, img), join(datadir, new_name))
+
 
 def get_images_feats(images_paths):
     "returns list of np arrays of feats"
     all_feats = []
+    paths_not_found = []
     for im_path in images_paths:
+        print "extracting face feats for:" , im_path
         im = face_recognition.load_image_file(im_path)
-        feats = face_recognition.face_encodings(im)[0] # assuming only one face in image
+        feats_list = face_recognition.face_encodings(im)
+        if len(feats_list) == 0:
+            print "*** didn't find a face ***"
+            paths_not_found.append(im_path)
+            continue
+        feats = feats_list[0] # assuming only one face in image
         all_feats.append(feats)
-    return all_feats
+    return all_feats, paths_not_found
 
 def recognize(img_path, model_path):
     """
@@ -38,7 +58,7 @@ def recognize(img_path, model_path):
         return None
     if num_faces == 1:
         paths = [img_path]
-    imgs_feats = get_images_feats(paths)
+    imgs_feats, _ = get_images_feats(paths)
     clf = pickle.load(open(model_path,'rb'))
     closest_distances = clf.kneighbors(imgs_feats, n_neighbors = 1)
     print closest_distances
@@ -69,9 +89,18 @@ def train_on_faces(faces_dir, model_output, model = "knn"):
     y = []
     train_paths = []
     for f in listdir(faces_dir):
+        print f
         train_paths.append(join(faces_dir, f))
-        y.append(get_face_label(f))
-    X = get_images_feats(train_paths)
+
+    X, not_found = get_images_feats(train_paths)
+    for p in train_paths:
+        if p in not_found:
+            print "not generating label to:", p
+            continue
+        label = get_face_label(p[p.rfind("/")+1:])
+        print p, label
+        y.append(label)
+    print set(y)
     clf = None
     if model == "knn":
         print "knn classifer"
@@ -92,6 +121,19 @@ def train_on_faces(faces_dir, model_output, model = "knn"):
     return set(y)
 
 if __name__ == "__main__":
+   # print train_on_faces("/home/itamar/PycharmProjects/facedetection/train_data_1/photos/data",
+    #                     "knn_train_1.p", model="knn")
+    #"/home/itamar/PycharmProjects/facedetection/train_data_1/photos/data/begin_fsaf.jpg
+    #print recognize("/home/itamar/PycharmProjects/facedetection/train_data_1/photos/data/golda_987fa.jpg",
+     #               "knn_train_1.p")[0]
+    print recognize("golda_test1.jpg",
+                    "knn_train_1.p")[0]
+
+    exit()
+    #print recognize("biden_inaug.jpg", "knn_dummy_biden_bieber.p")
+
+    #prep_data_from_dirs("/home/itamar/PycharmProjects/facedetection/train_data_1/photos")
+    #exit()
     print train_on_faces("/home/itamar/PycharmProjects/facedetection/training_faces_dummy",
                          "knn_dummy_biden_bieber.p", model="knn")
     print recognize("biden_inaug.jpg", "knn_dummy_biden_bieber.p")
