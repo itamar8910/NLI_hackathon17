@@ -1,16 +1,21 @@
+import commands
+
 import indicoio
+import os
+
 from face_recog_local import recognize
 from age_gender_estimation.get_age_gender import get_age_gender
 from get_wiki_info import get_year_of_birth
+from subprocess import Popen, PIPE, STDOUT
 indicoio.config.api_key = '78b44753116b224e21ac1686033bdcb7'
 
 
 #gets the number of objects
 def findThings(thePath):
    #finds the objects in the photo
-   theObj=indicoio.image_recognition(thePath, top_n=5)
+   theObj=indicoio.image_recognition(thePath, top_n=3)
 
-   return theObj
+   return theObj.keys()
 
 
 #gets the filling from the photo
@@ -22,6 +27,40 @@ def findEmotion(thePath):
    maxI = max(theResult, key=theResult.get)  # Just use 'min' instead of 'max' for minimum.
    return maxI
 
+
+def get_textual_desc(meta_data):
+    inp = "Persons: "
+    ordered_pds = []
+    for pd in meta_data['persons']:
+        if pd[0] != 'N/A':
+            ordered_pds.append(pd)
+    for pd in meta_data['persons']:
+        if pd[0] == 'N/A':
+            pd[0] = "*anonymous*"
+            ordered_pds.append(pd)
+    print ordered_pds
+    for pd in ordered_pds:
+        inp += pd[0] + " "
+    inp += "- "
+    inp += "Emotions: "
+    for pd in ordered_pds:
+        inp += pd[3] + " "
+    inp += "- "
+    inp += "Objects: "
+    for obj in meta_data['objects']:
+        inp += obj + " "
+    inp += "- "
+    print inp
+    #p = Popen(['java', '-jar', './textGen.jar'], stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+    #stdout, stderr = p.communicate(input=inp)
+    #print stdout
+    #return str(stdout)
+    cmd = 'java -jar ./textGen.jar ' + inp
+    print cmd
+    res = commands.getstatusoutput(cmd)
+    print "res"
+    print res
+    return " ".join(res[1].split("\n"))
 def gen_metadata(img_path):
     """
     generates image metadata: persons in the images and their emotions, and the objects in the image.
@@ -31,14 +70,36 @@ def gen_metadata(img_path):
     model_path = "knn_dummy_biden_bieber.p"
     names, paths = recognize(img_path, model_path)
     persons_md = []
+    avg_pic_year = 0
+    pic_year_count = 0
     for name, path in zip(names, paths):
         emotion = findEmotion(path)
         age, gender = get_age_gender(path)
         persons_md.append([name, age[0], gender[0], emotion])
+        person_yob = get_year_of_birth(name)
+        if name != "N/A":
+            avg_pic_year += person_yob + age
+            pic_year_count += 1
     objects = findThings(img_path)
-    return {'persons':persons_md, 'objects':objects}
+    meta_data = {'persons':persons_md, 'objects':objects, 'year':int(avg_pic_year/float(pic_year_count))}
+    textual_desc = get_textual_desc(meta_data)
+    meta_data['desc'] = textual_desc
+    return meta_data
+
 
 if __name__ == "__main__":
+    # inp = "Persons: biden *anonymous* - Emotions: Happy Happy - Objects: bow tie, bow-tie, bowtie Windsor tie groom, bridegroom suit, suit of clothes abaya - "
+    # cmd = 'java -jar ./textGen.jar ' + inp
+    # print cmd
+    # res = commands.getstatusoutput(cmd)
+    # #os.system(cmd + " > textGen.txt")
+    # #print open('textGen.txt','w').read()
+    # p = Popen(['java', '-jar', './textGen.jar', inp], stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+    # stdout, stderr = p.communicate(input=inp)
+    # for line in stdout:
+    #     print line
+    # print stdout
+    # exit()
     md = gen_metadata("/home/itamar/PycharmProjects/facedetection/obama_and_biden.jpg")
     print md
     print "*****"
