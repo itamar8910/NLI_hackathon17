@@ -11,3 +11,10 @@ The code used in the NLI hackathon, 23-24/11/2017 for generating image metadata:
 - Age,Gender&Emotion, Object recogintion: with a CNN trained for each metada field.
 
 - Textual Description: Using the above meta-data and the nlp library simplenlg.
+
+## Team mebers:
+
+- Itamar Shenhar itamar8910@gmail.com
+- Gil Maman Gil.maman.5@gmail.com 
+- Dani Rubin sbh.ruchi@gmail.com 
+- Tom Guter tomyguter@gmail.com 
