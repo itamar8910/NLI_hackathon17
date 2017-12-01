@@ -7,7 +7,7 @@ import indicoio
 from os import listdir
 from os.path import join
 
-indicoio.config.api_key = '78b44753116b224e21ac1686033bdcb7'
+indicoio.config.api_key = 'your api key'
 
 def get_images_feats(images_paths):
     "returns list of np arrays of feats"
