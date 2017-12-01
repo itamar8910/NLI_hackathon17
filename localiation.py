@@ -5,7 +5,7 @@ from os.path import join
 from os.path import isdir
 from os import mkdir
 import face_recognition
-indicoio.config.api_key = '78b44753116b224e21ac1686033bdcb7'
+indicoio.config.api_key = 'your api key'
 
 def extract_faces_indico(img_path, dst_dir, sensitivity = 0.8):
     "returns list of face imgs extracted. note: not all imgaes contain faces, the identity recog should filter those"
